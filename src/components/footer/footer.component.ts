@@ -1,4 +1,12 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, HostListener } from '@angular/core';
+import { 
+    Component, 
+    Input, 
+    Output, 
+    EventEmitter, 
+    ChangeDetectionStrategy, 
+    HostListener,
+    ElementRef,
+    Renderer } from '@angular/core';
 import { NgbPaginationConfig } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -68,7 +76,7 @@ export class DataTableFooterComponent {
     }
 
     /** Use NgbPaginationConfig to default pagination initialization. */
-    constructor(private _config: NgbPaginationConfig) {
+    constructor(element: ElementRef, renderer: Renderer, private _config: NgbPaginationConfig) {
         this.offset = 0;
         this.boundaryLinks = _config.boundaryLinks;
         this.directionLinks = _config.directionLinks;
@@ -76,5 +84,7 @@ export class DataTableFooterComponent {
         this.pageSize = _config.pageSize;
         this.rotate = _config.rotate;
         this.size = _config.size ? _config.size : "sm";
+
+        renderer.setElementClass(element.nativeElement, 'datatable-footer', true);
     }
 }

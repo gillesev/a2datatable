@@ -3,52 +3,69 @@
 <head>
   <title>@e3r Data Table Component Testing Playground</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/css/bootstrap.min.css">
-  <style>
+  <style> 
     .datatable {
       text-align: left;
-      width: 75%;
+      width: 100%;
       margin: 0 auto;
+      position: static;
+      display: table;
+    }
+    
+    .datatable-body {
+      display: table;
+    }
+    
+    .datatable-footer {
+      position: fixed;
+      display: table;
+      bottom: 50px;
+      width: 100%;
+    }
+    
+    .datatable .datatable-footer {
+      display: table;
     }
 
     .datatable.scroll-vertical {
       height: 70vh;
     }
-
+    
     .selected-column {
       background: #FFF;
       -webkit-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 1px 2px 0 rgba(0, 0, 0, 0.24);
       -moz-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 1px 2px 0 rgba(0, 0, 0, 0.24);
       box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 1px 2px 0 rgba(0, 0, 0, 0.24);
     }
-
+    
     .group {
       position: relative;
       margin-bottom: 45px;
     }
-
+    
     .expander-btn {
-      margin-top:8px;
-      display:block;
+      margin-top: 8px;
+      display: block;
     }
-
-    .selection-cell .datatable-body-cell.active{
+    
+    .selection-cell .datatable-body-cell.active {
       background: #0829e0 !important;
       color: #FFF !important;
     }
-
+    
     .selected-column {
       float: right;
       width: 20%;
       margin-right: 20px;
       text-align: left;
     }
-
+    
     .selected-column h4 {
       text-align: center;
       margin: 10px 0 0 0;
       padding: 0;
     }
-
+    
     .github-button-wrap {
       position: absolute;
       top: 10px;

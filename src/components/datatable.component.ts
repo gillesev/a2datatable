@@ -84,6 +84,12 @@ export class DatatableComponent implements OnInit, AfterViewInit {
 
   // Rows
   @Input() set rows(val: any[]) {
+    if (!this._fromonColumnSort && !this.externalSorting) {
+      val = this.sortPageRows(val, this.sorts, this.offset, this.limit, this.columns);
+    }
+
+    if (this._fromonColumnSort) { this._fromonColumnSort = false; }
+
     this._rows = val;
     this.recalculate();
   }
@@ -142,7 +148,15 @@ export class DatatableComponent implements OnInit, AfterViewInit {
   @Input() limit: number = undefined;
 
   // Total count
-  @Input() count: number = 0;
+  private _count: number = 0;
+  @Input() set count(val: number) {
+    this._count = val;
+    this.recalculateDims();
+  }
+
+  get count(): number {
+    return this._count;
+  }
 
   // Page offset
   @Input() offset: number = 0;
@@ -158,6 +172,9 @@ export class DatatableComponent implements OnInit, AfterViewInit {
 
   // type of sorting
   @Input() sortType: SortType = SortType.single;
+
+  // If sorting is performed on server or 'in-page' on client.
+  @Input() externalSorting: boolean = false;
 
   // sorts
   @Input() sorts: any[] = [];
@@ -218,7 +235,7 @@ export class DatatableComponent implements OnInit, AfterViewInit {
   @Output() resize: EventEmitter<any> = new EventEmitter();
 
   /** Propagates the event when the [execute context menu item] event is fired */
-  @Output() contextMenuExecuted: EventEmitter<any> =  new EventEmitter();
+  @Output() contextMenuExecuted: EventEmitter<any> = new EventEmitter();
 
   @HostBinding('class.fixed-header')
   get isFixedHeader() {
@@ -288,7 +305,7 @@ export class DatatableComponent implements OnInit, AfterViewInit {
     return this._menuItemDetailTemplateChild;
   }
 
-  offsetX: number = 0;  
+  offsetX: number = 0;
 
   @ViewChild(DataTableBodyComponent)
   private bodyComponent: DataTableBodyComponent;
@@ -304,6 +321,45 @@ export class DatatableComponent implements OnInit, AfterViewInit {
   private _columnTemplates: QueryList<DataTableColumnDirective>;
   private _rowDetailTemplateChild: DatatableRowDetailDirective;
   private _menuItemDetailTemplateChild: MenuItemDetailDirective;
+
+  private _fromonColumnSort: boolean = false;
+
+  private sortPageRows(rows: any[], dirs: any[], offset: number, limit: number, columns: any[]): any[] {
+    let result: any[] = [];
+    let rowsToSort: any[] = [];
+    let start: number, end: number;
+
+    if (limit > 0) {
+      // yes, then perform an 'in-page' sort
+      start = offset * limit;
+      end = start + limit;
+    }
+
+    if (limit > 0) {
+      // yes, then perform an 'in-page' sort
+      for (let i = start; i < end; i++) {
+        rowsToSort.push(rows[i]);
+      }
+    }
+    else {
+      // no, then consider the entire result set.
+      rowsToSort = rows;
+    }
+
+    // perform the actual sorting
+    rowsToSort = sortRows(rowsToSort, columns, dirs);
+
+    // re-insertst the 'in-page' sorted rows (if needs to)
+    if (limit > 0) {
+
+      let j = 0;
+      for (let i = start; i < end; i++) {
+        rows[i] = rowsToSort[j]; j++;
+      }
+    }
+
+    return rows;  
+  }
 
   constructor(renderer: Renderer, element: ElementRef) {
     this.element = element.nativeElement;
@@ -485,14 +541,18 @@ export class DatatableComponent implements OnInit, AfterViewInit {
   }
 
   onColumnSort(event): void {
-    const { column, sorts } = event;
+    const { sorts } = event;
 
-    if (column.comparator !== undefined) {
-      if (typeof column.comparator === 'function') {
-        column.comparator(this.rows, sorts);
-      }
-    } else {
-      this.rows = sortRows(this.rows, sorts);
+    // if sorting on server, bypass client 'in-page' sorting.
+    if (!this.externalSorting) {
+      let allRows = [...this.rows];
+
+      // sort only the rows in the current page but returns entire result set.
+      allRows = this.sortPageRows(allRows, sorts, this.offset, this.limit, this.columns);
+
+      // since the rows setter will want to apply default sorting, indicate that the sorting has already taken place.
+      this._fromonColumnSort = true;
+      this.rows = allRows;
     }
 
     this.sorts = sorts;

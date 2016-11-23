@@ -1,34 +1,36 @@
 import { Component, Inject, Input } from '@angular/core';
 
-import { 
+import {
   ContextMenuComponent,
   ContextMenuService,
-  DataTableContextMenuConfig, 
+  DataTableContextMenuConfig,
   ContextMenuItemDescriptor
 } from '../../src';
+
+import { SearchServiceDemo } from './search-demo.service';
 
 /** Create an instance of DataTableContextMenuConfig to build an array of the item menu descriptors
  * specific to this data table.
  * Note: the use of the providers with [useValue] to NOT share this config service across components.
  */
 const dataTableCtxtMenuConfigDemo: DataTableContextMenuConfig = new DataTableContextMenuConfig(
-    [
-      { 
-        id: 1, 
-        order: 1, 
-        description: 'View' 
-      },
-      { 
-        id: 2, 
-        order: 2, 
-        description: 'Edit'
-      },
-      { 
-        id: 3, 
-        order: 3, 
-        description: 'Delete' 
-      }
-    ]
+  [
+    {
+      id: 1,
+      order: 1,
+      description: 'View'
+    },
+    {
+      id: 2,
+      order: 2,
+      description: 'Edit'
+    },
+    {
+      id: 3,
+      order: 3,
+      description: 'Delete'
+    }
+  ]
 );
 
 /** E3RDataComponent demo
@@ -74,7 +76,7 @@ const dataTableCtxtMenuConfigDemo: DataTableContextMenuConfig = new DataTableCon
  *  The context which is surfaced to the template is an object with shape: { context: { dataItem: any, menuDesc: ContextMenuItemDescriptor }}.
  *  The context gives you access to a) data item is the data item row targeted by the right click and 
  *  b) the menu descriptor. 
- */ 
+ */
 @Component({
   selector: 'e3r-data-table-demo',
   template: `
@@ -89,12 +91,14 @@ const dataTableCtxtMenuConfigDemo: DataTableContextMenuConfig = new DataTableCon
         [headerHeight]="40"
         [footerHeight]="90"
         [rowHeight]="40"
+        [loadingIndicator]="loading"
         [externalPaging]="true"
         [count]="count"
         [offset]="offset"
         [limit]="limit"
         [selected]="selected"
-        [selectionType]="'single'"        
+        [selectionType]="'single'"
+        [sortType]="'single'"        
         (page)='onPage($event)'
         (activate)='onActivate($event)'
         [useContextMenu]="true"
@@ -111,9 +115,10 @@ const dataTableCtxtMenuConfigDemo: DataTableContextMenuConfig = new DataTableCon
       </e3r-data-table>
     </div>
   `,
-  providers: [ 
+  providers: [
     ContextMenuService,
-    { provide: DataTableContextMenuConfig, useValue: dataTableCtxtMenuConfigDemo} 
+    { provide: DataTableContextMenuConfig, useValue: dataTableCtxtMenuConfigDemo },
+    SearchServiceDemo
   ]
 })
 export class DataComponentDemo {
@@ -124,28 +129,52 @@ export class DataComponentDemo {
   limit: number = 10;
   selected = [];
 
+  private loading: boolean = false;
+
+  /** 
+   * - ContextMenuService is used to provide menu context feature
+   * - DataTableContextMenuConfig is used to inject the menu item descriptors (e.g. 'View', 'Edit' options.)
+   * - see ContextMenuItemDescriptor model
+   */
+  constructor(
+    private contextMenuService: ContextMenuService,
+    private _ctxtMenuItemConfig: DataTableContextMenuConfig,
+    private _searchService: SearchServiceDemo) {
+  }
+
   /** Add logic here to initialize the data component (not in the ctor). */
   ngOnInit() {
     this.page(this.offset, this.limit);
   }
 
-  /** DEMO method to populate a data table page with data.
-   * This method illustrates how server paging can be implemented.
-   */
+  // /** DEMO method to populate a data table page with data.
+  //  * This method illustrates how server paging can be implemented.
+  //  */
   page(offset, limit) {
-    this.fetch((results) => {
-      this.count = results.length;
+    this.loading = true;
 
-      const start = offset * limit;
-      const end = start + limit;
-      let rows = [...this.rows];
+    this._searchService.search(offset, limit)
+      .subscribe(
+      results => {
+        this.count = results.length;
 
-      for (let i = start; i < end; i++) {
-        rows[i] = results[i];
-      }
+        const start = offset * limit;
+        const end = start + limit;
 
-      this.rows = rows;
-    });
+        let rows = [...this.rows];
+
+        for (let i = start; i < end; i++) {
+          rows[i] = results[i];
+        }
+
+        this.rows = rows;
+
+        this.loading = false;
+      },
+      err => {
+        console.log(err);
+        this.loading = false;
+      });
   }
 
   /** DEMO method to fetch data. Observable api should be used. */
@@ -178,16 +207,8 @@ export class DataComponentDemo {
   isContextMenuItemEnabled = (dataItem: any, menuDef: ContextMenuItemDescriptor) => {
     return true;
   }
-  
+
   /** Add logic here to describe what happens when context menu is selected. */
   onExecuteMenuItem = (dataItem: any, menuDef: ContextMenuItemDescriptor) => {
-  }
-
-  /** 
-   * - ContextMenuService is used to provide menu context feature
-   * - DataTableContextMenuConfig is used to inject the menu item descriptors (e.g. 'View', 'Edit' options.)
-   * - see ContextMenuItemDescriptor model
-   */
-  constructor(private contextMenuService: ContextMenuService, private _ctxtMenuItemConfig: DataTableContextMenuConfig) {
   }
 }
