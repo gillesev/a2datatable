@@ -14,7 +14,7 @@ import { NgbPaginationConfig } from '@ng-bootstrap/ng-bootstrap';
     template: `
         <div [style.height.px]="footerHeight">
             <div>{{rowCount.toLocaleString()}} {{totalMessage}}</div>
-            <div class="pager">
+            <div *ngIf="isVisible" class="pager">
                 <ngb-pagination 
                     [collectionSize]="rowCount"
                     [boundaryLinks]="boundaryLinks" 
@@ -73,6 +73,10 @@ export class DataTableFooterComponent {
     /** Current selected page (related to the offset property) */
     get curPage(): number {
         return this.offset + 1;
+    }
+
+    get isVisible() {
+        return (this.rowCount / this.pageSize) > 1;
     }
 
     /** Use NgbPaginationConfig to default pagination initialization. */

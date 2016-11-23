@@ -357,6 +357,9 @@ export class DatatableComponent implements OnInit, AfterViewInit {
         rows[i] = rowsToSort[j]; j++;
       }
     }
+    else {
+      rows = rowsToSort;
+    }
 
     return rows;  
   }
